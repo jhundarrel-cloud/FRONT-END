@@ -2,10 +2,7 @@ import React, { useState } from 'react';
 import {
   Grid,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
+
   Typography,
   Box,
   Card,
@@ -30,7 +27,7 @@ const LivelihoodDetailsSection = ({
   fisherfolkDetails,
   farmworkerDetails,
   agriYouthDetails,
-  errors,
+
   updateField
 }) => {
   const [currentTab, setCurrentTab] = useState(0);
