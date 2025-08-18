@@ -1,78 +1,250 @@
+import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import Footer from 'src/components/Footer';
-import { Grid, Container } from '@mui/material';
+import {
+  Container,
+  Grid,
+  Card,
+  CardContent,
+  Typography,
+  Stepper,
+  Step,
+  StepLabel,
+  Box,
+  Button,
+  LinearProgress,
+  Alert,
+  Fade,
+  Paper,
+  Chip,
+  IconButton,
+  Tooltip
+} from '@mui/material';
+import {
+  Person as PersonIcon,
+  Agriculture as AgricultureIcon,
+  Landscape as LandscapeIcon,
+  Work as WorkIcon,
+  Assessment as AssessmentIcon,
+  Send as SendIcon,
+  ArrowBack as ArrowBackIcon,
+  ArrowForward as ArrowForwardIcon,
+  Refresh as RefreshIcon,
+  Save as SaveIcon
+} from '@mui/icons-material';
+import { styled } from '@mui/material/styles';
 
-// 🌾 RSBSA Form Components - Based on Database Schema
-import BeneficiaryProfile from './BeneficiaryProfile';          // beneficiary_profiles table
-import FarmProfile from './FarmProfile';                        // farm_profiles table
-import LivelihoodCategory from './LivelihoodCategory';          // livelihood_categories table
-import FarmParcels from './FarmParcels';                        // farm_parcels table
-import FarmerDetails from './FarmerDetails';                    // farmer_details table
-import RSBSAEnrollment from './RSBSAEnrollment';                // rsbsa_enrollments table
+// Import the custom hook
+import { useRSBSAForm } from './useRSBSAForm';
 
-function RSBSAForm() {
-  // 💾 Get stored form data from localStorage (mimics database structure)
-  const storedFormData = JSON.parse(localStorage.getItem('rsbsaFormData')) || {};
-  
-  // 🗂️ Form data structure matching database relationships
-  const formData = {
-    // Main beneficiary information (beneficiary_profiles table)
-    beneficiaryProfile: storedFormData.beneficiaryProfile || {
-      RSBSA_NUMBER: null,
-      barangay: '',
-      municipality: 'Opol',
-      province: 'Misamis Oriental',
-      region: 'X',
-      contact_number: '',
-      birth_date: null,
-      place_of_birth: '',
-      sex: '',
-      civil_status: null,
-      name_of_spouse: null,
-      highest_education: null,
-      religion: null,
-      is_pwd: false,
-      has_government_id: 'no',
-      gov_id_type: null,
-      gov_id_number: null,
-      is_association_member: 'no',
-      association_name: null,
-      mothers_maiden_name: null,
-      is_household_head: false,
-      household_head_name: null,
-      emergency_contact_number: null
+// Import form sections (we'll create these)
+import BeneficiaryProfileSection from './sections/BeneficiaryProfileSection';
+import FarmProfileSection from './sections/FarmProfileSection';
+import FarmParcelsSection from './sections/FarmParcelsSection';
+import LivelihoodDetailsSection from './sections/LivelihoodDetailsSection';
+import ReviewSection from './sections/ReviewSection';
+import SubmissionSection from './sections/SubmissionSection';
+
+// Styled components for modern design
+const StyledCard = styled(Card)(({ theme }) => ({
+  borderRadius: theme.spacing(2),
+  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+  border: `1px solid ${theme.palette.divider}`,
+  transition: 'all 0.3s ease-in-out',
+  '&:hover': {
+    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.15)',
+    transform: 'translateY(-2px)'
+  }
+}));
+
+const StyledStepper = styled(Stepper)(({ theme }) => ({
+  padding: theme.spacing(3, 0),
+  '& .MuiStepLabel-root': {
+    '& .MuiStepLabel-iconContainer': {
+      '& .MuiSvgIcon-root': {
+        fontSize: '1.8rem',
+        color: theme.palette.primary.main,
+        '&.Mui-active': {
+          color: theme.palette.primary.main,
+        },
+        '&.Mui-completed': {
+          color: theme.palette.success.main,
+        }
+      }
+    }
+  }
+}));
+
+const ProgressContainer = styled(Box)(({ theme }) => ({
+  position: 'sticky',
+  top: theme.spacing(2),
+  zIndex: 1000,
+  backgroundColor: theme.palette.background.paper,
+  borderRadius: theme.spacing(1),
+  padding: theme.spacing(2),
+  marginBottom: theme.spacing(3),
+  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+  border: `1px solid ${theme.palette.divider}`
+}));
+
+const ActionButtonContainer = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginTop: theme.spacing(3),
+  padding: theme.spacing(2),
+  backgroundColor: theme.palette.background.default,
+  borderRadius: theme.spacing(1),
+  border: `1px solid ${theme.palette.divider}`
+}));
+
+const RSBSAForm = () => {
+  const {
+    formData,
+    errors,
+    isLoading,
+    isSubmitting,
+    currentStep,
+    totalSteps,
+    updateField,
+    addFarmParcel,
+    updateFarmParcel,
+    removeFarmParcel,
+    validateForm,
+    nextStep,
+    prevStep,
+    goToStep,
+    submitForm,
+    resetForm,
+    formProgress,
+    isValid,
+    canSubmit
+  } = useRSBSAForm();
+
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  // Step configuration
+  const steps = [
+    {
+      label: 'Personal Information',
+      icon: <PersonIcon />,
+      description: 'Basic beneficiary details'
     },
-    
-    // Farm profile information (farm_profiles table)
-    farmProfile: storedFormData.farmProfile || {
-      livelihood_category_id: null
+    {
+      label: 'Farm Profile',
+      icon: <AgricultureIcon />,
+      description: 'Farm and livelihood information'
     },
-    
-    // Livelihood categories (livelihood_categories table)
-    livelihoods: storedFormData.livelihoods || [],
-    
-    // Farm parcels information (farm_parcels table)
-    farmParcels: storedFormData.farmParcels || [],
-    
-    // Farmer specific details (farmer_details table)
-    farmerDetails: storedFormData.farmerDetails || {
-      is_rice: false,
-      is_corn: false,
-      is_other_crops: false,
-      other_crops_description: null,
-      is_livestock: false,
-      livestock_description: null,
-      is_poultry: false,
-      poultry_description: null
+    {
+      label: 'Farm Parcels',
+      icon: <LandscapeIcon />,
+      description: 'Land ownership details'
     },
-    
-    // RSBSA enrollment information (rsbsa_enrollments table)
-    enrollment: storedFormData.enrollment || {
-      reference_code: '',
-      status: 'pending',
-      submitted_at: null,
-      verified_at: null,
-      rejection_reason: null
+    {
+      label: 'Livelihood Details',
+      icon: <WorkIcon />,
+      description: 'Specific agricultural activities'
+    },
+    {
+      label: 'Review',
+      icon: <AssessmentIcon />,
+      description: 'Review all information'
+    },
+    {
+      label: 'Submit',
+      icon: <SendIcon />,
+      description: 'Submit your application'
+    }
+  ];
+
+  // Handle form submission
+  const handleSubmit = async () => {
+    const success = await submitForm();
+    if (success) {
+      setShowSuccess(true);
+      setShowError(false);
+    } else {
+      setShowError(true);
+      setErrorMessage('Failed to submit form. Please try again.');
+      setShowSuccess(false);
+    }
+  };
+
+  // Handle form reset
+  const handleReset = () => {
+    if (window.confirm('Are you sure you want to reset the form? All data will be lost.')) {
+      resetForm();
+      setShowSuccess(false);
+      setShowError(false);
+    }
+  };
+
+  // Save draft
+  const handleSaveDraft = () => {
+    // Data is automatically saved to localStorage via the hook
+    alert('Draft saved successfully!');
+  };
+
+  // Render current step content
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <BeneficiaryProfileSection
+            formData={formData.beneficiaryProfile}
+            errors={errors}
+            updateField={(field, value) => updateField('beneficiaryProfile', field, value)}
+          />
+        );
+      case 2:
+        return (
+          <FarmProfileSection
+            formData={formData.farmProfile}
+            errors={errors}
+            updateField={(field, value) => updateField('farmProfile', field, value)}
+          />
+        );
+      case 3:
+        return (
+          <FarmParcelsSection
+            farmParcels={formData.farmParcels}
+            errors={errors}
+            addFarmParcel={addFarmParcel}
+            updateFarmParcel={updateFarmParcel}
+            removeFarmParcel={removeFarmParcel}
+          />
+        );
+      case 4:
+        return (
+          <LivelihoodDetailsSection
+            farmerDetails={formData.farmerDetails}
+            fisherfolkDetails={formData.fisherfolkDetails}
+            farmworkerDetails={formData.farmworkerDetails}
+            agriYouthDetails={formData.agriYouthDetails}
+            errors={errors}
+            updateField={updateField}
+          />
+        );
+      case 5:
+        return (
+          <ReviewSection
+            formData={formData}
+            errors={errors}
+            onEdit={goToStep}
+          />
+        );
+      case 6:
+        return (
+          <SubmissionSection
+            formData={formData}
+            isSubmitting={isSubmitting}
+            onSubmit={handleSubmit}
+            canSubmit={canSubmit}
+          />
+        );
+      default:
+        return null;
     }
   };
 
@@ -80,49 +252,215 @@ function RSBSAForm() {
     <>
       <Helmet>
         <title>RSBSA Registration Form - Registry System for Basic Sectors in Agriculture</title>
+        <meta 
+          name="description" 
+          content="Complete your RSBSA registration to access agricultural programs and benefits" 
+        />
       </Helmet>
-      <Container sx={{ mt: 3 }} maxWidth="lg">
-        <Grid
-          container
-          direction="row"
-          justifyContent="center"
-          alignItems="stretch"
-          spacing={3}
+
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        {/* Header Section */}
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            p: 4, 
+            mb: 4, 
+            background: 'linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%)',
+            color: 'white',
+            borderRadius: 2
+          }}
         >
-          {/* 👤 Primary beneficiary information section */}
-          <Grid item xs={12} md={8}>
-            <BeneficiaryProfile formData={formData.beneficiaryProfile} />
+          <Typography variant="h3" component="h1" gutterBottom fontWeight="bold">
+            RSBSA Registration Form
+          </Typography>
+          <Typography variant="h6" sx={{ opacity: 0.9, mb: 2 }}>
+            Registry System for Basic Sectors in Agriculture
+          </Typography>
+          <Typography variant="body1" sx={{ opacity: 0.8 }}>
+            Complete this form to register as a beneficiary and access agricultural programs, 
+            services, and benefits provided by the Department of Agriculture.
+          </Typography>
+        </Paper>
+
+        {/* Progress Indicator */}
+        <ProgressContainer>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+            <Typography variant="h6" color="primary" fontWeight="bold">
+              Form Progress
+            </Typography>
+            <Chip 
+              label={`${formProgress}% Complete`}
+              color="primary"
+              variant="outlined"
+              sx={{ fontWeight: 'bold' }}
+            />
+          </Box>
+          <LinearProgress 
+            variant="determinate" 
+            value={formProgress} 
+            sx={{ 
+              height: 8, 
+              borderRadius: 4,
+              backgroundColor: 'rgba(0, 0, 0, 0.1)',
+              '& .MuiLinearProgress-bar': {
+                borderRadius: 4
+              }
+            }} 
+          />
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Step {currentStep} of {totalSteps}: {steps[currentStep - 1]?.description}
+          </Typography>
+        </ProgressContainer>
+
+        {/* Success/Error Messages */}
+        <Fade in={showSuccess}>
+          <Alert 
+            severity="success" 
+            sx={{ mb: 3, borderRadius: 2 }}
+            onClose={() => setShowSuccess(false)}
+          >
+            <Typography variant="h6" gutterBottom>Form Submitted Successfully!</Typography>
+            Your RSBSA application has been submitted and is now being processed. 
+            You will receive updates on your application status.
+          </Alert>
+        </Fade>
+
+        <Fade in={showError}>
+          <Alert 
+            severity="error" 
+            sx={{ mb: 3, borderRadius: 2 }}
+            onClose={() => setShowError(false)}
+          >
+            <Typography variant="h6" gutterBottom>Submission Failed</Typography>
+            {errorMessage}
+          </Alert>
+        </Fade>
+
+        {/* Main Form Card */}
+        <StyledCard>
+          <CardContent sx={{ p: 4 }}>
+            {/* Stepper */}
+            <StyledStepper activeStep={currentStep - 1} alternativeLabel>
+              {steps.map((step, index) => (
+                <Step key={step.label}>
+                  <StepLabel 
+                    icon={step.icon}
+                    onClick={() => goToStep(index + 1)}
+                    sx={{ cursor: 'pointer' }}
+                  >
+                    <Typography variant="body2" fontWeight="medium">
+                      {step.label}
+                    </Typography>
+                  </StepLabel>
+                </Step>
+              ))}
+            </StyledStepper>
+
+            {/* Form Content */}
+            <Box sx={{ mt: 4 }}>
+              {renderStepContent()}
+            </Box>
+
+            {/* Action Buttons */}
+            <ActionButtonContainer>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <Tooltip title="Save current progress">
+                  <Button
+                    variant="outlined"
+                    startIcon={<SaveIcon />}
+                    onClick={handleSaveDraft}
+                    disabled={isSubmitting}
+                  >
+                    Save Draft
+                  </Button>
+                </Tooltip>
+
+                <Tooltip title="Reset all form data">
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    startIcon={<RefreshIcon />}
+                    onClick={handleReset}
+                    disabled={isSubmitting}
+                  >
+                    Reset Form
+                  </Button>
+                </Tooltip>
+              </Box>
+
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<ArrowBackIcon />}
+                  onClick={prevStep}
+                  disabled={currentStep === 1 || isSubmitting}
+                >
+                  Previous
+                </Button>
+
+                {currentStep < totalSteps ? (
+                  <Button
+                    variant="contained"
+                    endIcon={<ArrowForwardIcon />}
+                    onClick={nextStep}
+                    disabled={isSubmitting}
+                    sx={{ minWidth: 120 }}
+                  >
+                    Next
+                  </Button>
+                ) : (
+                  <Button
+                    variant="contained"
+                    color="success"
+                    endIcon={<SendIcon />}
+                    onClick={handleSubmit}
+                    disabled={!canSubmit || isSubmitting}
+                    sx={{ minWidth: 120 }}
+                  >
+                    {isSubmitting ? 'Submitting...' : 'Submit Application'}
+                  </Button>
+                )}
+              </Box>
+            </ActionButtonContainer>
+          </CardContent>
+        </StyledCard>
+
+        {/* Form Information Footer */}
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            mt: 4, 
+            p: 3, 
+            backgroundColor: 'background.default',
+            borderRadius: 2,
+            border: '1px solid',
+            borderColor: 'divider'
+          }}
+        >
+          <Typography variant="h6" gutterBottom color="primary">
+            Important Information
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={4}>
+              <Typography variant="body2" color="text.secondary">
+                <strong>Data Privacy:</strong> Your information is protected under the Data Privacy Act of 2012.
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Typography variant="body2" color="text.secondary">
+                <strong>Auto-Save:</strong> Your progress is automatically saved as you complete each section.
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Typography variant="body2" color="text.secondary">
+                <strong>Support:</strong> Contact your local DA office for assistance with this form.
+              </Typography>
+            </Grid>
           </Grid>
-          
-          {/* 🏠 Farm profile and livelihood category */}
-          <Grid item xs={12} md={4}>
-            <FarmProfile formData={formData.farmProfile} />
-          </Grid>
-          
-          {/* 🌱 Livelihood categories selection */}
-          <Grid item xs={12} md={8}>
-            <LivelihoodCategory formData={formData.livelihoods} />
-          </Grid>
-          
-          {/* 🚜 Farmer specific activities and details */}
-          <Grid item xs={12} md={4}>
-            <FarmerDetails formData={formData.farmerDetails} />
-          </Grid>
-          
-          {/* 🗺️ Farm parcels information */}
-          <Grid item xs={12} md={7}>
-            <FarmParcels formData={formData.farmParcels} />
-          </Grid>
-          
-          {/* 📝 RSBSA enrollment status and submission */}
-          <Grid item xs={12} md={5}>
-            <RSBSAEnrollment formData={formData.enrollment} />
-          </Grid>
-        </Grid>
+        </Paper>
       </Container>
-      <Footer />
     </>
   );
-}
+};
 
 export default RSBSAForm;
