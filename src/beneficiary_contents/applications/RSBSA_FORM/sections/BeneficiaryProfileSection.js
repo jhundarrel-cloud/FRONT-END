@@ -16,9 +16,7 @@ import {
   FormHelperText,
   Chip
 } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+// Using standard TextField for date input to avoid additional dependencies
 import { Person as PersonIcon } from '@mui/icons-material';
 
 const BeneficiaryProfileSection = ({ formData, errors, updateField }) => {
@@ -59,8 +57,7 @@ const BeneficiaryProfileSection = ({ formData, errors, updateField }) => {
   };
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <Box>
+    <Box>
         {/* Section Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
           <PersonIcon sx={{ fontSize: 32, color: 'primary.main', mr: 2 }} />
@@ -167,18 +164,17 @@ const BeneficiaryProfileSection = ({ formData, errors, updateField }) => {
 
                   {/* Personal Details */}
                   <Grid item xs={12} md={6}>
-                    <DatePicker
+                    <TextField
+                      fullWidth
                       label="Birth Date *"
-                      value={formData.birth_date ? new Date(formData.birth_date) : null}
-                      onChange={(date) => handleFieldChange('birth_date', date?.toISOString())}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          fullWidth
-                          error={!!errors['beneficiaryProfile.birth_date']}
-                          helperText={errors['beneficiaryProfile.birth_date']}
-                        />
-                      )}
+                      type="date"
+                      value={formData.birth_date ? formData.birth_date.split('T')[0] : ''}
+                      onChange={(e) => handleFieldChange('birth_date', e.target.value ? new Date(e.target.value).toISOString() : null)}
+                      error={!!errors['beneficiaryProfile.birth_date']}
+                      helperText={errors['beneficiaryProfile.birth_date']}
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
                     />
                   </Grid>
 
@@ -391,7 +387,6 @@ const BeneficiaryProfileSection = ({ formData, errors, updateField }) => {
           </Grid>
         </Grid>
       </Box>
-    </LocalizationProvider>
   );
 };
 

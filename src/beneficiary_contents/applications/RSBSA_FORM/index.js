@@ -173,6 +173,7 @@ const RSBSAForm = () => {
 
   // Handle form reset
   const handleReset = () => {
+    // eslint-disable-next-line no-alert
     if (window.confirm('Are you sure you want to reset the form? All data will be lost.')) {
       resetForm();
       setShowSuccess(false);
@@ -183,6 +184,7 @@ const RSBSAForm = () => {
   // Save draft
   const handleSaveDraft = () => {
     // Data is automatically saved to localStorage via the hook
+    // eslint-disable-next-line no-alert
     alert('Draft saved successfully!');
   };
 

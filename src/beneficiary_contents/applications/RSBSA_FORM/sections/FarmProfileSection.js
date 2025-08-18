@@ -126,6 +126,7 @@ const FarmProfileSection = ({ formData, errors, updateField }) => {
         
         setLivelihoodCategories(categories);
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Error fetching livelihood categories:', error);
       } finally {
         setLoading(false);

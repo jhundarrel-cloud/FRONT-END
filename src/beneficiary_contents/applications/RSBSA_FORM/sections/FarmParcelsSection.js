@@ -60,6 +60,7 @@ const FarmParcelsSection = ({ farmParcels, errors, addFarmParcel, updateFarmParc
   };
 
   const handleRemoveParcel = (index) => {
+    // eslint-disable-next-line no-alert
     if (window.confirm('Are you sure you want to remove this farm parcel?')) {
       removeFarmParcel(index);
     }

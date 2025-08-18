@@ -150,6 +150,7 @@ export const useRSBSAForm = () => {
         const parsedData = JSON.parse(savedData);
         setFormData(prevData => ({ ...prevData, ...parsedData }));
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Error loading saved form data:', error);
       }
     }
@@ -321,6 +322,7 @@ export const useRSBSAForm = () => {
       
       return true;
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Form submission error:', error);
       return false;
     } finally {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Grid,
   TextField,
@@ -33,7 +33,7 @@ const LivelihoodDetailsSection = ({
   errors,
   updateField
 }) => {
-  const [currentTab, setCurrentTab] = React.useState(0);
+  const [currentTab, setCurrentTab] = useState(0);
 
   const handleTabChange = (event, newValue) => {
     setCurrentTab(newValue);
